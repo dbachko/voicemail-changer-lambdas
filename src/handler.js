@@ -4,8 +4,8 @@ export const hello = (event, context, callback) => {
     statusCode: 200,
     body: JSON.stringify({
       input: event,
-      message
-    })
+      message,
+    }),
   };
 
   callback(null, response);
@@ -15,5 +15,5 @@ export const hello = (event, context, callback) => {
 };
 
 export default {
-  hello
+  hello,
 };

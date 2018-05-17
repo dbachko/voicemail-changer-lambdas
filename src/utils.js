@@ -1,7 +1,4 @@
-import {
-  DynamoDB,
-  S3
-} from 'aws-sdk';
+import { DynamoDB, S3 } from 'aws-sdk';
 
 /**
  * Writes file to S3 bucket.
@@ -18,14 +15,16 @@ const writeToS3 = (path, data) =>
       Body: JSON.stringify(data),
       ContentType: 'application/json',
     };
-    s3.putObject(params, (err, data) => {
-      err && reject(err.stack);
-      resolve(data);
+    s3.putObject(params, (err, result) => {
+      if (err) {
+        reject(err.stack);
+      }
+      resolve(result);
     });
   });
 
 /**
- * Reaads file from S3 bucket.
+ * Reads file from S3 bucket.
  * @param  {String} path File path.
  * @return {Object}      Json object.
  */
@@ -37,7 +36,9 @@ const readFromS3 = path =>
       Key: path,
     };
     s3.getObject(params, (err, data) => {
-      err && resolve([]);
+      if (err) {
+        resolve([]);
+      }
       resolve(data ? JSON.parse(data.Body.toString()) : []);
     });
   });
@@ -48,35 +49,33 @@ const readFromS3 = path =>
  * @param  {Object} doc       Doc to insert.
  * @return {Promise}          [description]
  */
-const databasePutItem = (exchange, doc) =>
+const dbPutItem = (exchange, {
+  recordId, status, text, voice,
+}) =>
   new Promise((resolve, reject) => {
-    const {
-      recordId,
-      status,
-      text,
-      voice,
-    } = doc;
-    const dynamodb = new DynamoDB();
+    const db = new DynamoDB();
     const dbParams = {
       Item: {
         id: {
-          S: recordId
+          S: recordId,
         },
         text: {
-          S: text
+          S: text,
         },
         voice: {
-          S: voice
+          S: voice,
         },
         status: {
-          S: status
-        }
+          S: status,
+        },
       },
-      TableName: 'VoicemailChangerTable'
+      TableName: 'VoicemailChangerTable',
     };
 
-    dynamodb.putItem(dbParams, (err, body) => {
-      err && reject(err.stack);
+    db.putItem(dbParams, (err, body) => {
+      if (err) {
+        reject(err.stack);
+      }
       resolve(body);
     });
   });
@@ -87,7 +86,7 @@ const databasePutItem = (exchange, doc) =>
  * @param  {Object} data  Data.
  * @return {Object}       Response object.
  */
-export const generateResp = (event, data) => ({
+const generateResponse = (event, data) => ({
   statusCode: 200,
   body: JSON.stringify({
     input: event,
@@ -95,9 +94,4 @@ export const generateResp = (event, data) => ({
   }),
 });
 
-
-export {
-  databasePutItem,
-  readFromS3,
-  writeToS3
-};
+export { dbPutItem, generateResponse, readFromS3, writeToS3 };
