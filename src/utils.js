@@ -1,21 +1,24 @@
-import { DynamoDB, S3 } from 'aws-sdk';
+import { DynamoDB, Polly, S3 } from 'aws-sdk';
 
 /**
  * Writes file to S3 bucket.
- * @param  {String} path File path.
- * @param  {Object} data Data to save.
- * @return {Promise}     Result of operation.
+ * @param  {String}      path        File path.
+ * @param  {Buffer}      data        Data to save.
+ * @param  {contentType} contentType Content type.
+ * @return {Promise}                 Result of operation.
  */
-const writeToS3 = (path, data) =>
+const uploadToS3 = (path, data, contentType) =>
   new Promise((resolve, reject) => {
     const s3 = new S3();
     const params = {
+      ACL: 'public-read', // Make it public.
       Bucket: 'voicemail-changer-bucket',
       Key: path,
-      Body: JSON.stringify(data),
-      ContentType: 'application/json',
+      Body: data,
+      ContentType: contentType,
+      StorageClass: 'REDUCED_REDUNDANCY', // Save costs.
     };
-    s3.putObject(params, (err, result) => {
+    s3.upload(params, (err, result) => {
       if (err) {
         reject(err.stack);
       }
@@ -24,32 +27,11 @@ const writeToS3 = (path, data) =>
   });
 
 /**
- * Reads file from S3 bucket.
- * @param  {String} path File path.
- * @return {Object}      Json object.
- */
-const readFromS3 = path =>
-  new Promise((resolve) => {
-    const s3 = new S3();
-    const params = {
-      Bucket: 'voicemail-changer-bucket',
-      Key: path,
-    };
-    s3.getObject(params, (err, data) => {
-      if (err) {
-        resolve([]);
-      }
-      resolve(data ? JSON.parse(data.Body.toString()) : []);
-    });
-  });
-
-/**
  * Saves document into database.
- * @param  {String} exchange  Exchange name.
  * @param  {Object} doc       Doc to insert.
  * @return {Promise}          [description]
  */
-const dbPutItem = (exchange, {
+const dbPutItem = ({
   recordId, status, text, voice,
 }) =>
   new Promise((resolve, reject) => {
@@ -81,6 +63,68 @@ const dbPutItem = (exchange, {
   });
 
 /**
+ * Updates document in database.
+ * @param  {Object} doc       Doc to update.
+ * @return {Promise}          [description]
+ */
+const dbUpdateItem = ({ id, url, status }) =>
+  new Promise((resolve, reject) => {
+    const db = new DynamoDB();
+    const dbParams = {
+      Key: {
+        id: {
+          S: id,
+        },
+      },
+      ExpressionAttributeNames: {
+        '#S': 'status',
+        '#U': 'url',
+      },
+      ExpressionAttributeValues: {
+        ':s': {
+          S: status,
+        },
+        ':u': {
+          S: url,
+        },
+      },
+      UpdateExpression: 'SET #S = :s, #U = :u',
+      TableName: 'VoicemailChangerTable',
+    };
+
+    db.updateItem(dbParams, (err, body) => {
+      if (err) {
+        reject(err.stack);
+      }
+      resolve(body);
+    });
+  });
+
+/**
+ * Generates audio from text.
+ * @param  {String} text    Text message.
+ * @param  {String} voiceId Voice id.
+ * @return {Promise}        Result of operation.
+ */
+const generateAudio = (text, voiceId = 'Joanna') =>
+  new Promise((resolve, reject) => {
+    const polly = new Polly();
+    const params = {
+      OutputFormat: 'mp3',
+      SampleRate: '8000',
+      Text: text,
+      TextType: 'text',
+      VoiceId: voiceId,
+    };
+    polly.synthesizeSpeech(params, (err, result) => {
+      if (err) {
+        reject(err.stack);
+      }
+      resolve(result);
+    });
+  });
+
+/**
  * Generates json response.
  * @param  {String} event Event name.
  * @param  {Object} data  Data.
@@ -94,4 +138,4 @@ const generateResponse = (event, data) => ({
   }),
 });
 
-export { dbPutItem, generateResponse, readFromS3, writeToS3 };
+export { dbPutItem, dbUpdateItem, generateAudio, generateResponse, uploadToS3 };

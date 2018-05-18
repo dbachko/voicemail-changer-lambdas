@@ -98,12 +98,24 @@ provider:
 #    - exclude-me-dir/**
 
 functions:
-  hello:
-    handler: src/handler.hello
+  create:
+    handler: src/create.index
     events:
       - http:
-          path: hello
+          path: create
           method: get
+  generate:
+    handler: src/generate.index
+    events:
+      - stream:
+          type: dynamodb
+          batchSize: 1
+          startingPosition: LATEST
+          enabled: true
+          arn:
+            Fn::GetAtt:
+              - VoicemailChangerTable
+              - StreamArn
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -150,6 +162,8 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
     VoicemailChangerS3Bucket:
       Type: AWS::S3::Bucket
       Properties:
