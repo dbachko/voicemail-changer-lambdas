@@ -1,10 +1,10 @@
 {
-  "name": "voicemail-changer",
+  "name": "voicemail-changer-lambdas",
   "version": "0.0.5",
   "description": "Voicemail changer application",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dbachko/voicemail-changer.git"
+    "url": "git+https://github.com/dbachko/voicemail-changer-lambdas.git"
   },
   "keywords": [
     "aws",
@@ -17,12 +17,13 @@
   "author": "dbachko",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/dbachko/voicemail-changer/issues"
+    "url": "https://github.com/dbachko/voicemail-changer-lambdas/issues"
   },
-  "homepage": "https://github.com/dbachko/voicemail-changer#readme",
+  "homepage": "https://github.com/dbachko/voicemail-changer-lambdas#readme",
   "devDependencies": {
     "babel-core": "^6.26.3",
     "babel-loader": "^7.1.4",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "dotenv": "^5.0.1",
     "eslint": "^4.13.1",

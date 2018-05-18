@@ -32,14 +32,14 @@ const uploadToS3 = (path, data, contentType) =>
  * @return {Promise}          [description]
  */
 const dbPutItem = ({
-  recordId, status, text, voice,
+  id, status, text, voice,
 }) =>
   new Promise((resolve, reject) => {
     const db = new DynamoDB();
     const dbParams = {
       Item: {
         id: {
-          S: recordId,
+          S: id,
         },
         text: {
           S: text,
@@ -101,6 +101,54 @@ const dbUpdateItem = ({ id, url, status }) =>
   });
 
 /**
+ * Returns list of items from the db.
+ * @param  {String} id       Record id.
+ * @return {Promise}         [description]
+ */
+const dbListItems = id =>
+  new Promise((resolve, reject) => {
+    const db = new DynamoDB();
+
+    const params = {
+      ExpressionAttributeNames: {
+        '#TT': 'text',
+        '#IT': 'id',
+        '#UT': 'url',
+        '#VT': 'voice',
+      },
+      ProjectionExpression: '#TT, #IT, #UT, #VT',
+      TableName: 'VoicemailChangerTable',
+    };
+
+    // Check if id is present do search by it's value, if not return all items.
+    if (id) {
+      const query = {
+        ExpressionAttributeValues: {
+          ':id': {
+            S: id,
+          },
+        },
+        KeyConditionExpression: 'id = :id',
+      };
+      // Search for a specific item.
+      db.query({ ...params, ...query }, (err, body) => {
+        if (err) {
+          reject(err.stack);
+        }
+        resolve(body);
+      });
+    } else {
+      // Return all items.
+      db.scan(params, (err, body) => {
+        if (err) {
+          reject(err.stack);
+        }
+        resolve(body);
+      });
+    }
+  });
+
+/**
  * Generates audio from text.
  * @param  {String} text    Text message.
  * @param  {String} voiceId Voice id.
@@ -138,4 +186,4 @@ const generateResponse = (event, data) => ({
   }),
 });
 
-export { dbPutItem, dbUpdateItem, generateAudio, generateResponse, uploadToS3 };
+export { dbListItems, dbPutItem, dbUpdateItem, generateAudio, generateResponse, uploadToS3 };

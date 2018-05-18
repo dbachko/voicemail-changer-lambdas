@@ -98,14 +98,20 @@ provider:
 #    - exclude-me-dir/**
 
 functions:
-  create:
-    handler: src/create.index
+  submit:
+    handler: src/handlers/submit.index
     events:
       - http:
-          path: create
+          path: submit
+          method: post
+  list:
+    handler: src/handlers/list.index
+    events:
+      - http:
+          path: list
           method: get
   generate:
-    handler: src/generate.index
+    handler: src/handlers/generate.index
     events:
       - stream:
           type: dynamodb

@@ -1,5 +1,5 @@
 // import fs from 'fs';
-import { dbUpdateItem, generateAudio, generateResponse, uploadToS3 } from './utils';
+import { dbUpdateItem, generateAudio, generateResponse, uploadToS3 } from '../lib/utils';
 
 export const index = async (event, context, callback) => {
   const { Records } = event;
@@ -19,11 +19,5 @@ export const index = async (event, context, callback) => {
     await dbUpdateItem({ id, url: Location, status: 'UPDATED' });
   }
 
-  console.log('Records: ', Records);
-
   callback(null, generateResponse(event, {}));
-};
-
-export default {
-  index,
 };
