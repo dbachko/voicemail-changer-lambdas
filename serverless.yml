@@ -15,8 +15,10 @@ service: voicemail-changer
 
 plugins:
   - serverless-webpack
+  - serverless-offline
 
 custom:
+  secrets: ${file(secrets.json)}
   webpack:
     webpackConfig: 'webpack.config.js' # Name of webpack configuration file
     includeModules: true # Node modules configuration for packaging
@@ -31,6 +33,10 @@ provider:
   runtime: nodejs8.10
   memorySize: 128
   timeout: 60 # The default is 6
+  stage: dev
+  region: us-east-1
+  environment:
+    JWT_SECRET: ${self:custom.secrets.jwtSecret}
   iamRoleStatements:
     - Effect: Allow
       Action: # Gives permission to our DynamoDB table.
@@ -64,10 +70,6 @@ provider:
         - "arn:aws:s3:::voicemail-changer-bucket"
         - "arn:aws:s3:::voicemail-changer-bucket/*"
 
-# you can overwrite defaults here
-#  stage: dev
-#  region: us-east-1
-
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
 #    - Effect: "Allow"
@@ -84,10 +86,6 @@ provider:
 #            - "Ref" : "ServerlessDeploymentBucket"
 #            - "/*"
 
-# you can define service wide environment variables here
-#  environment:
-#    variable1: value1
-
 # you can add packaging information here
 #package:
 #  include:
@@ -98,18 +96,31 @@ provider:
 #    - exclude-me-dir/**
 
 functions:
+  login:
+    handler: src/handlers/login.default
+    events:
+      - http:
+          path: sessions
+          method: post
+          cors: true
+  authorize:
+    handler: src/handlers/authorize.default
   submit:
     handler: src/handlers/submit.default
     events:
       - http:
           path: submit
           method: post
+          cors: true
+          authorizer: authorize
   list:
     handler: src/handlers/list.default
     events:
       - http:
           path: list
           method: get
+          cors: true
+          authorizer: authorize
   generate:
     handler: src/handlers/generate.default
     events:

@@ -1,6 +1,37 @@
 import { DynamoDB, Polly, S3 } from 'aws-sdk';
 
 /**
+ * Returns an IAM policy document for a given user and resource.
+ *
+ * @method buildIAMPolicy
+ * @param {String} userId - user id
+ * @param {String} effect  - Allow / Deny
+ * @param {String} resource - resource ARN
+ * @param {String} context - response context
+ * @returns {Object} policyDocument
+ */
+const buildIAMPolicy = (userId, effect, resource, context) => {
+  console.log(`buildIAMPolicy ${userId} ${effect} ${resource}`);
+  const policy = {
+    principalId: userId,
+    policyDocument: {
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Action: 'execute-api:Invoke',
+          Effect: effect,
+          Resource: resource,
+        },
+      ],
+    },
+    context,
+  };
+
+  console.log(JSON.stringify(policy));
+  return policy;
+};
+
+/**
  * Writes file to S3 bucket.
  * @param  {String}      path        File path.
  * @param  {Buffer}      data        Data to save.
@@ -184,4 +215,29 @@ const generateResponse = (event, data) => ({
   }),
 });
 
-export { dbListItems, dbPutItem, dbUpdateItem, generateAudio, generateResponse, uploadToS3 };
+/**
+ * Filters object properties.
+ * @param {Object} obj  Object to work on.
+ * @param {Array} props Properties to filter out.
+ * @return {Object}     Filtered object.
+ */
+const objectOmit = (obj, props) => {
+  const filtered = {};
+  Object.entries(obj).forEach(([key, value]) => {
+    if (!props.includes(key)) {
+      filtered[key] = value;
+    }
+  });
+  return filtered;
+};
+
+export {
+  buildIAMPolicy,
+  dbListItems,
+  dbPutItem,
+  dbUpdateItem,
+  generateAudio,
+  generateResponse,
+  objectOmit,
+  uploadToS3,
+};
