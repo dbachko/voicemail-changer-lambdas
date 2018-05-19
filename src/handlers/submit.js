@@ -2,7 +2,7 @@ import qs from 'querystring';
 import uuidv4 from 'uuid/v4';
 import { dbPutItem } from '../lib/utils';
 
-export const index = async (event, context, callback) => {
+export default async (event, context, callback) => {
   const requestBody = qs.parse(event.body);
   const { text, voice } = requestBody;
 

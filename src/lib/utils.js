@@ -108,7 +108,6 @@ const dbUpdateItem = ({ id, url, status }) =>
 const dbListItems = id =>
   new Promise((resolve, reject) => {
     const db = new DynamoDB();
-
     const params = {
       ExpressionAttributeNames: {
         '#TT': 'text',
@@ -119,7 +118,6 @@ const dbListItems = id =>
       ProjectionExpression: '#TT, #IT, #UT, #VT',
       TableName: 'VoicemailChangerTable',
     };
-
     // Check if id is present do search by it's value, if not return all items.
     if (id) {
       const query = {

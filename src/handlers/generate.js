@@ -1,7 +1,7 @@
 // import fs from 'fs';
 import { dbUpdateItem, generateAudio, generateResponse, uploadToS3 } from '../lib/utils';
 
-export const index = async (event, context, callback) => {
+export default async (event, context, callback) => {
   const { Records } = event;
   const { eventName, dynamodb } = Records[0];
 

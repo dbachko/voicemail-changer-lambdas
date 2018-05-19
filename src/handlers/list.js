@@ -1,7 +1,7 @@
 import qs from 'querystring';
 import { dbListItems } from '../lib/utils';
 
-export const index = async (event, context, callback) => {
+export default async (event, context, callback) => {
   const requestBody = qs.parse(event.body);
   const { id } = requestBody;
 
