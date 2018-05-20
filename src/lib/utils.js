@@ -1,4 +1,6 @@
-import { DynamoDB, Polly, S3 } from 'aws-sdk';
+import DynamoDB from 'aws-sdk/clients/dynamodb';
+import Polly from 'aws-sdk/clients/polly';
+import S3 from 'aws-sdk/clients/s3';
 
 /**
  * Returns an IAM policy document for a given user and resource.
@@ -82,7 +84,7 @@ const dbPutItem = ({
           S: status,
         },
       },
-      TableName: 'VoicemailChangerTable',
+      TableName: 'VoicemailChangerDataTable',
     };
 
     db.putItem(dbParams, (err, body) => {
@@ -120,7 +122,7 @@ const dbUpdateItem = ({ id, url, status }) =>
         },
       },
       UpdateExpression: 'SET #S = :s, #U = :u',
-      TableName: 'VoicemailChangerTable',
+      TableName: 'VoicemailChangerDataTable',
     };
 
     db.updateItem(dbParams, (err, body) => {
@@ -147,7 +149,7 @@ const dbListItems = id =>
         '#VT': 'voice',
       },
       ProjectionExpression: '#TT, #IT, #UT, #VT',
-      TableName: 'VoicemailChangerTable',
+      TableName: 'VoicemailChangerDataTable',
     };
     // Check if id is present do search by it's value, if not return all items.
     if (id) {

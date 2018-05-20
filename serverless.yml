@@ -46,7 +46,9 @@ provider:
         - dynamodb:Query
         - dynamodb:Scan
         - dynamodb:UpdateItem
-      Resource: "arn:aws:dynamodb:*:*:table/VoicemailChangerTable"
+      Resource:
+        - "arn:aws:dynamodb:*:*:table/VoicemailChangerDataTable"
+        - "arn:aws:dynamodb:*:*:table/VoicemailChangerUserTable"
     - Effect: Allow
       Action: # Gives permission to publish messages.
         - SNS:Publish
@@ -103,6 +105,13 @@ functions:
           path: sessions
           method: post
           cors: true
+  register:
+    handler: src/handlers/register.default
+    events:
+      - http:
+          path: register
+          method: post
+          cors: true
   authorize:
     handler: src/handlers/authorize.default
   submit:
@@ -112,7 +121,9 @@ functions:
           path: submit
           method: post
           cors: true
-          authorizer: authorize
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 0
   list:
     handler: src/handlers/list.default
     events:
@@ -120,7 +131,9 @@ functions:
           path: list
           method: get
           cors: true
-          authorizer: authorize
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 0
   generate:
     handler: src/handlers/generate.default
     events:
@@ -131,7 +144,7 @@ functions:
           enabled: true
           arn:
             Fn::GetAtt:
-              - VoicemailChangerTable
+              - VoicemailChangerDataTable
               - StreamArn
 
 #    The following are a few example events you can configure
@@ -166,10 +179,23 @@ functions:
 # you can add CloudFormation resource templates here
 resources:
   Resources:
-    VoicemailChangerTable:
+    VoicemailChangerUserTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: VoicemailChangerTable
+        TableName: VoicemailChangerUserTable
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    VoicemailChangerDataTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: VoicemailChangerDataTable
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
